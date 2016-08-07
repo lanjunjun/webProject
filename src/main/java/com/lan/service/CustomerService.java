@@ -3,6 +3,7 @@ package com.lan.service;
 import com.lan.model.Customer;
 import com.lan.util.PropsUtil;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ public class CustomerService {
 
     private static final String PASSWORD;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomerService.class);
+
     static {
         Properties conf = PropsUtil.loadProps("config.properties");
         DRIVER = conf.getProperty("jdbc.driver");
@@ -33,7 +36,7 @@ public class CustomerService {
         try{
             Class.forName(DRIVER);
         }catch (ClassNotFoundException e){
-           // Logger.error("");
+            LOGGER.error("can not load jdbc driver",e);
         }
     }
 
@@ -41,16 +44,16 @@ public class CustomerService {
      * 获取客户列表
      * @return
      */
-    public List<Customer> getCustomerList(){
+    public List<Customer> getCustomerList() {
 
         Connection conn = null;
+        List<Customer> customerList = new ArrayList<>();
         try {
-            List<Customer> customerList = new ArrayList<>();
             String sql = "SELECT * from customer";
-            conn = DriverManager.getConnection(URL,USERNAME,PASSWORD);
+            conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             PreparedStatement stmt = conn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()){
+            while (rs.next()) {
                 Customer customer = new Customer();
                 customer.setId(rs.getLong("id"));
                 customer.setName(rs.getString("name"));
@@ -60,20 +63,18 @@ public class CustomerService {
                 customer.setRemark(rs.getString("remark"));
                 customerList.add(customer);
             }
-            return customerList;
-        }catch (SQLException e){
-
-        }finally {
-            if(conn != null){
+        } catch (SQLException e) {
+            LOGGER.error("execute sql failure",e);
+        } finally {
+            if (conn != null) {
                 try {
                     conn.close();
-                }catch (SQLException e){
-
+                } catch (SQLException e) {
+                    LOGGER.error("close connection failure",e);
                 }
             }
         }
-
-        return null;
+        return customerList;
     }
 
     /**
